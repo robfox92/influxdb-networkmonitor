@@ -19,6 +19,7 @@ def usage() -> None:
     print("  --influxdb_token       token for accessing influxdb")
     print("  --influxdb_org         influxdb organisation to write to")
     print("  --influxdb_bucket      influxdb bucket to write to")
+    print("  --send_interval        seconds to wait between sending to influxdb (default: 5)")
     print("router otions:")
     print("  --router_address       address of router to collect traffic data from (default:10.0.0.1)")
     print("  --router_port          port the router accepts ssh connections on (default:22)")
@@ -32,7 +33,7 @@ def get_local_ip(router_address:str, router_port:int) -> str:
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], ["h"], ["help", \
-                                                    "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", \
+                                                    "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=" \
                                                      "router_address=", "router_port=", "traffic_subnet="])
 except getopt.GetoptError:
     usage()
@@ -43,9 +44,8 @@ def main() -> None:
     influxdb_token = ""
     influxdb_org = ""
     influxdb_bucket = ""
-    send_interval_seconds = 5 
     
-    send_interval = timedelta(seconds=send_interval_seconds)
+    send_interval = timedelta(seconds=5)
     maintenance_interval = timedelta(minutes=10)
 
     router_address = "10.0.0.1"
@@ -82,6 +82,14 @@ def main() -> None:
                 exit(1)
         if o in ["--traffic_subnet"]:
             traffic_subnet = a
+            continue
+        if o in ["--send_interval"]:
+            try:
+                send_interval.seconds = int(a)
+            except:
+                print("error: failed to parse send_interval")
+                usage()
+                exit(1)
             continue
 
     # TODO: validate that required opts are set correctly
@@ -138,10 +146,10 @@ def main() -> None:
             if current_time - last_send_time > send_interval:
                 writes = []
                 for ip, count in ip_to_bytes_sent.items():
-                    writes.append(f"net,host={ip},name={ip_to_host[ip]},eth={ip_to_eth[ip]} bytes_sent_per_sec={count/send_interval_seconds}")
+                    writes.append(f"net,host={ip},name={ip_to_host[ip]},eth={ip_to_eth[ip]} bytes_sent_per_sec={count/send_interval.total_seconds}")
                     ip_to_bytes_sent[ip] = 0
                 for ip, count in ip_to_bytes_recv.items():
-                    writes.append(f"net,host={ip},name={ip_to_host[ip]},eth={ip_to_eth[ip]} bytes_recv_per_sec={count/send_interval_seconds}")
+                    writes.append(f"net,host={ip},name={ip_to_host[ip]},eth={ip_to_eth[ip]} bytes_recv_per_sec={count/send_interval.total_seconds}")
                     ip_to_bytes_recv[ip] = 0
                 influxdb_writer.write(influxdb_bucket, influxdb_org, writes)
                 last_send_time = current_time
