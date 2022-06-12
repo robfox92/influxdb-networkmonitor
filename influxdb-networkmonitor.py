@@ -114,7 +114,7 @@ def main() -> None:
     influxdb_writer = influx_client.write_api(write_options=ASYNCHRONOUS)
 
 
-    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} -U -w - "
+    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} -U -w - "
     try:
         wireshark_source = subprocess.Popen(["ssh", router_address, ssh_command], \
                                             stdout=subprocess.PIPE)
