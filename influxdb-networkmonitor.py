@@ -144,23 +144,28 @@ def main() -> None:
             if dst_ip.packed[3] == 255: continue
 
             if src_ip in ip_range:
-                if packet['ip'].src not in ip_to_bytes_sent.keys():
+                try:
+                    ip_to_bytes_sent[packet['ip'].src] += packet_length
+                except KeyError:
                     ip_to_bytes_sent[packet['ip'].src] = 0
                     ip_to_eth[packet['ip'].src] = packet['eth'].src
                     try:
                         ip_to_host[packet['ip'].src] = socket.gethostbyaddr(packet['ip'].src)[0]
                     except:
                         ip_to_host[packet['ip'].src] = "unknown"
-                ip_to_bytes_sent[packet['ip'].src] += packet_length
+                    ip_to_bytes_sent[packet['ip'].src] += packet_length
+                
             if dst_ip in ip_range:
-                if packet['ip'].dst not in ip_to_bytes_recv.keys():
+                try:
+                    ip_to_bytes_recv[packet['ip'].dst] += packet_length
+                except KeyError:
                     ip_to_bytes_recv[packet['ip'].dst] = 0
                     ip_to_eth[packet['ip'].dst] = packet['eth'].dst
                     try:
                         ip_to_host[packet['ip'].dst] = socket.gethostbyaddr(packet['ip'].dst)[0]
                     except:
                         ip_to_host[packet['ip'].dst] = "unknown"
-                ip_to_bytes_recv[packet['ip'].dst] += packet_length
+                    ip_to_bytes_recv[packet['ip'].dst] += packet_length
 
             # periodically send data to influx
             if current_time - last_send_time > send_interval:
