@@ -93,7 +93,7 @@ def main() -> None:
                 exit(1)
             continue
 
-    # TODO: validate that required opts are set correctly
+    # TODO: validate influxdb_token, influxdb_org, influxdb_bucket
     
     local_ip = get_local_ip(router_address=router_address, router_port=router_port)
     ip_range = ip_network(traffic_subnet)
@@ -106,12 +106,11 @@ def main() -> None:
     if influx_client.health().status != "pass":
         print(f"error: failed to connect to influxdb at {influxdb_url}")
         exit(1)
-    influx_client.buckets_api()
+    
     influxdb_writer = influx_client.write_api(write_options=ASYNCHRONOUS)
 
 
-
-    ssh_command = f"/usr/sbin/tcpdump ip and host not {local_ip} and host not {router_address} -U -w - "
+    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} -U -w - "
     try:
         wireshark_source = subprocess.Popen(["ssh", router_address, ssh_command], \
                                             stdout=subprocess.PIPE)
