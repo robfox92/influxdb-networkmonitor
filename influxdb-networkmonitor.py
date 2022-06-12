@@ -170,14 +170,18 @@ def main() -> None:
             # periodically send data to influx
             if current_time - last_send_time > send_interval:
                 timestamp = int(current_time.timestamp())
-                writes = []
+                
                 for ip, count in ip_to_bytes_sent.items():
-                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds()} {timestamp}")
+                    influxdb_writer._write_batching(influxdb_bucket, influxdb_org, \
+                        f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds()} {timestamp}"\
+                        ,write_precision=WritePrecision.S)
                     ip_to_bytes_sent[ip] = 0
                 for ip, count in ip_to_bytes_recv.items():
-                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds()}  {timestamp}")
+                    influxdb_writer._write_batching(influxdb_bucket, influxdb_org, \
+                        f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds()} {timestamp}"\
+                        ,write_precision=WritePrecision.S)
                     ip_to_bytes_recv[ip] = 0
-                influxdb_writer.write(influxdb_bucket, influxdb_org, writes,write_precision=WritePrecision.S)
+                
                 last_send_time = current_time
                 
                 if current_time - last_maintenance_time > maintenance_interval:
