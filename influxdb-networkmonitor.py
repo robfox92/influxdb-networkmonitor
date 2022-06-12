@@ -156,8 +156,8 @@ def main() -> None:
                 
                 if current_time - last_maintenance_time > maintenance_interval:
                     # clear our maps every 10 mins or so
-                    # this means that if any ip_to_host mappings are altered we'll see them
-                    # same with ip_to_eth
+                    # this means that if any ip_to_host or ip_to_eth mappings are altered we'll see them
+                    # we clear out all of our maps because we add to ip_to_host when we add to ip_to_bytes_{sent,recv}
                     ip_to_bytes_sent: dict[str,int] = dict()
                     ip_to_bytes_recv: dict[str,int] = dict()
                     ip_to_host: dict[str,str] = dict()
