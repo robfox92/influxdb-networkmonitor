@@ -16,6 +16,8 @@ Install requirements:
 
 [Install tshark](https://tshark.dev/setup/install/)
 
+Configure remote access to router via ssh - preferably by using ssh keys
+
 ## Usage
 
 ### Basic usage
