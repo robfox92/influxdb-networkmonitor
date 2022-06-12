@@ -13,6 +13,7 @@ from influxdb_client.client.write.point import WritePrecision
 import socket
 import subprocess
 from ipaddress import ip_address, ip_network
+import random
 
 def usage() -> None:
     print("influxdb-networkmonitor: monitor traffic on your network and store in influxdb")
@@ -129,6 +130,7 @@ def main() -> None:
         ip_to_eth: dict[str,str] = dict()
         packet: Packet
         for packet in PipeCapture(wireshark_source.stdout):
+            if random.random() > 0.5: continue
             current_time = packet.sniff_time
             delay = datetime.now() - current_time
             if delay > timedelta(seconds=5):
