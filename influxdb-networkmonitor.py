@@ -32,9 +32,10 @@ def get_local_ip(router_address:str, router_port:int) -> str:
         return s.getsockname()[0]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], ["h"], ["help", \
-                                                    "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=" \
-                                                     "router_address=", "router_port=", "traffic_subnet="])
+    opts, args = getopt.getopt(sys.argv[1:], ["h"], \
+                               ["help", \
+                                "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=" \
+                                "router_address=", "router_port=", "traffic_subnet="])
 except getopt.GetoptError:
     usage()
     exit(1)
@@ -97,9 +98,19 @@ def main() -> None:
     local_ip = get_local_ip(router_address=router_address, router_port=router_port)
     ip_range = ip_network(traffic_subnet)
 
+    if not (influxdb_url.startswith("http://") or influxdb_url.startswith("https://")):
+        influxdb_url = "http://" + influxdb_url
+
     # set up our comms with influx
     influx_client = InfluxDBClient(url=influxdb_url, token=influxdb_token, org=influxdb_org)
+    if influx_client.health().status != "pass":
+        print(f"error: failed to connect to influxdb at {influxdb_url}")
+        exit(1)
+    influx_client.buckets_api()
     influxdb_writer = influx_client.write_api(write_options=ASYNCHRONOUS)
+
+
+
     ssh_command = f"/usr/sbin/tcpdump ip and host not {local_ip} and host not {router_address} -U -w - "
     try:
         wireshark_source = subprocess.Popen(["ssh", router_address, ssh_command], \
@@ -146,10 +157,10 @@ def main() -> None:
             if current_time - last_send_time > send_interval:
                 writes = []
                 for ip, count in ip_to_bytes_sent.items():
-                    writes.append(f"net,host={ip},name={ip_to_host[ip]},eth={ip_to_eth[ip]} bytes_sent_per_sec={count/send_interval.total_seconds}")
+                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds}")
                     ip_to_bytes_sent[ip] = 0
                 for ip, count in ip_to_bytes_recv.items():
-                    writes.append(f"net,host={ip},name={ip_to_host[ip]},eth={ip_to_eth[ip]} bytes_recv_per_sec={count/send_interval.total_seconds}")
+                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds}")
                     ip_to_bytes_recv[ip] = 0
                 influxdb_writer.write(influxdb_bucket, influxdb_org, writes)
                 last_send_time = current_time
