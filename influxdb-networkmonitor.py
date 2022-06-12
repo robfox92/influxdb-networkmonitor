@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import getopt
 from influxdb_client import InfluxDBClient
 from influxdb_client.client.write_api import ASYNCHRONOUS, SYNCHRONOUS
+from influxdb_client.client.write.point import WritePrecision
 import socket
 import subprocess
 from ipaddress import ip_address, ip_network
@@ -114,7 +115,7 @@ def main() -> None:
     influxdb_writer = influx_client.write_api(write_options=ASYNCHRONOUS)
 
 
-    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} -U -w - "
+    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} and host not {router_address} -U -w - "
     try:
         wireshark_source = subprocess.Popen(["ssh", router_address, ssh_command], \
                                             stdout=subprocess.PIPE)
@@ -163,7 +164,7 @@ def main() -> None:
 
             # periodically send data to influx
             if current_time - last_send_time > send_interval:
-                timestamp = time.mktime(current_time.timetuple())
+                timestamp = int(current_time.timestamp())
                 writes = []
                 for ip, count in ip_to_bytes_sent.items():
                     writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds()} {timestamp}")
@@ -171,7 +172,7 @@ def main() -> None:
                 for ip, count in ip_to_bytes_recv.items():
                     writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds()}  {timestamp}")
                     ip_to_bytes_recv[ip] = 0
-                influxdb_writer.write(influxdb_bucket, influxdb_org, writes)
+                influxdb_writer.write(influxdb_bucket, influxdb_org, writes,write_precision=WritePrecision.S)
                 last_send_time = current_time
                 
                 if current_time - last_maintenance_time > maintenance_interval:
@@ -184,7 +185,8 @@ def main() -> None:
                     ip_to_eth: dict[str,str] = dict()
                     last_maintenance_time = current_time
 
-
+    except Exception as e:
+        pass
 
 
     finally:
