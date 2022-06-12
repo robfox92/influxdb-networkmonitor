@@ -14,6 +14,8 @@ Install requirements:
 
 `pip install -r requirements.txt`
 
+[Install tshark](https://tshark.dev/setup/install/)
+
 ## Usage
 
 ### Basic usage
