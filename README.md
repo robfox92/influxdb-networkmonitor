@@ -2,7 +2,7 @@
 
 This is a tool to collect traffic data on your network and store it in influxdb.  It stores the IP address, hostname, ethernet/MAC address and {sent, received} bytes/sec of a given network device. Hostname lookup is provided by via `gethostbyaddr()`, and is cached for 10 minutes.
 
-Traffic data is collected by starting a tcpdump session on a remote network device (e.g. a router) over ssh, and processing the files with [pyshark](https://github.com/KimiNewt/pyshark/). Traffic data to/from the collection machine is excluded. Data for hosts outside the specified subnet is not collected.
+Traffic data is collected by starting a tcpdump session on a remote network device (e.g. a router) over ssh, and processing the files with [pyshark](https://github.com/KimiNewt/pyshark/). Traffic data on the ssh port used is excluded. Data for hosts outside the specified subnet is not collected.
 
 ## Installation
 
