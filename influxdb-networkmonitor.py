@@ -13,6 +13,9 @@ import subprocess
 from ipaddress import ip_address, ip_network
 
 def usage() -> None:
+    print("influxdb-networkmonitor: monitor traffic on your network and store in influxdb")
+    print("https://github.com/robfox92/influxdb-networkmonitor")
+    print("")
     print("  -h, --help             print this text and exit")
     print("influxdb options:")
     print("  --influxdb_url         address of influxdb instance (default: http://localhost:8086)")
