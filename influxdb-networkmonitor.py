@@ -4,6 +4,7 @@ from pyshark.packet.packet import Packet
 from pyshark.capture.pipe_capture import PipeCapture
 
 import sys
+import time
 from datetime import datetime, timedelta
 import getopt
 from influxdb_client import InfluxDBClient
@@ -128,6 +129,11 @@ def main() -> None:
         packet: Packet
         for packet in PipeCapture(wireshark_source.stdout):
             current_time = packet.sniff_time
+            delay = datetime.now() - current_time
+            if delay > timedelta(seconds=5):
+                print("warning: packet processing is not keeping up")
+                print(f"delay: {delay}")
+
             packet_length = int(packet.length)
             src_ip = ip_address(packet['ip'].src)
             dst_ip = ip_address(packet['ip'].dst)
@@ -157,12 +163,13 @@ def main() -> None:
 
             # periodically send data to influx
             if current_time - last_send_time > send_interval:
+                timestamp = time.mktime(current_time.timetuple())
                 writes = []
                 for ip, count in ip_to_bytes_sent.items():
-                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds()}")
+                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds()} {timestamp}")
                     ip_to_bytes_sent[ip] = 0
                 for ip, count in ip_to_bytes_recv.items():
-                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds()}")
+                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds()}  {timestamp}")
                     ip_to_bytes_recv[ip] = 0
                 influxdb_writer.write(influxdb_bucket, influxdb_org, writes)
                 last_send_time = current_time
