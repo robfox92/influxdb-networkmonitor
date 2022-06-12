@@ -1,8 +1,5 @@
 pyshark
-sys
 getopt
 datetime
 influxdb_client
-socket
-subprocess
 ipaddress
