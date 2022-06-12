@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "debug test.py",
+            "type": "python",
+            "request": "launch",
+            "program": "influxdb-networkmonitor.py",
+            "args": [   "--influxdb_url=YOUR_INFLUXDB_URL_HERE",
+                        "--influxdb_token=YOUR_INFLUXDB_TOKEN_HERE",
+                        "--influxdb_org=YOUR_INFLUXDB_ORG_HERE",
+                        "--influxdb_bucket=YOUR_INFLUXDB_BUCKET_HERE"
+                    ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}
