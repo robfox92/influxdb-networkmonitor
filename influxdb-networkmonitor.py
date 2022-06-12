@@ -157,10 +157,10 @@ def main() -> None:
             if current_time - last_send_time > send_interval:
                 writes = []
                 for ip, count in ip_to_bytes_sent.items():
-                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds}")
+                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval.total_seconds()}")
                     ip_to_bytes_sent[ip] = 0
                 for ip, count in ip_to_bytes_recv.items():
-                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds}")
+                    writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval.total_seconds()}")
                     ip_to_bytes_recv[ip] = 0
                 influxdb_writer.write(influxdb_bucket, influxdb_org, writes)
                 last_send_time = current_time
