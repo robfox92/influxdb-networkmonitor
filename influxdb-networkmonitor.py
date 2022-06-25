@@ -39,7 +39,7 @@ def get_local_ip(router_address:str, router_port:int) -> str:
 try:
     opts, args = getopt.getopt(sys.argv[1:], ["h"], \
                                ["help", \
-                                "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=" \
+                                "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=", \
                                 "router_address=", "router_port=", "traffic_subnet="])
 except getopt.GetoptError as e:
     print("error parsing arguments")
