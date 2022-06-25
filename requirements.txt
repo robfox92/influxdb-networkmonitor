@@ -1,5 +1,4 @@
 pyshark
-getopt
 datetime
 influxdb_client
 ipaddress
