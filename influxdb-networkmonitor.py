@@ -41,8 +41,9 @@ try:
                                ["help", \
                                 "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=" \
                                 "router_address=", "router_port=", "traffic_subnet="])
-except getopt.GetoptError:
+except getopt.GetoptError as e:
     print("error parsing arguments")
+    print(e)
     usage()
     exit(1)
 
