@@ -188,6 +188,7 @@ def main() -> None:
                     last_maintenance_time = current_time
 
     except Exception as e:
+        print(e)
         pass
 
 
