@@ -197,7 +197,7 @@ def main() -> None:
                 packet_time = datetime.fromisoformat(packet_time_bstr.decode('utf-8'))
                 direction = direction_bstr.decode('utf-8')
                 ip = ip_bstr.decode('utf-8')
-                size = int(size_bstr.decode('utf-8'))
+                size = int(size_bstr.decode('utf-8')) * 100
                 eth = eth_bstr.decode('utf-8')
             except ValueError:
                 # if we can't unpack the line, it's malformed. just go to the next line
