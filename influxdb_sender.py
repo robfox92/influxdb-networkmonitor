@@ -123,7 +123,7 @@ def main() -> None:
             continue
         if o in ["--send_interval"]:
             try:
-                send_interval.seconds = int(a)
+                send_interval = timedelta(seconds=int(a))
             except:
                 print("error: failed to parse send_interval")
                 usage()
@@ -247,7 +247,7 @@ def main() -> None:
                 current_time = datetime.now()
                 processing_lag = current_time - packet_time
                 write_log_message(packet_time, 3, "main()", 
-                    ["performing maintenance", f"real time = {current_time}",f"processing lag: {processing_lag}"]
+                    ["performing maintenance", f"processing lag: {processing_lag}"]
                 )
                 # completely clear out our stats so we don't keep sending 0 for inactive hosts
                 ip_to_bytes_sent = dict()
