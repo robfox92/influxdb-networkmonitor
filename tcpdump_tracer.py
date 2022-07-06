@@ -68,7 +68,7 @@ def main() -> None:
     local_ip = get_local_ip(router_address=router_address, router_port=router_port)
     ip_range = ip_network(traffic_subnet)
 
-    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} and host not {router_address} -U -w - "
+    ssh_command = f"/usr/sbin/tcpdump ip and net {traffic_subnet} and host not {router_address} -U -w - "
     ssh_args = ["ssh", ssh_options, router_address, ssh_command]
     
 
