@@ -243,7 +243,7 @@ def main() -> None:
                     
 
             
-            if packet_time - last_maintenance_time > maintenance_interval:
+            if packet_time - last_maintenance_time > maintenance_interval + timedelta(minutes=random.random()):
                 current_time = datetime.now()
                 processing_lag = current_time - packet_time
                 write_log_message(packet_time, 3, "main()", 
