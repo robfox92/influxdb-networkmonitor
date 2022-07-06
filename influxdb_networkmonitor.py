@@ -41,17 +41,6 @@ except getopt.GetoptError as e:
     usage()
     exit(1)
 
-async def send_stats(   influxdb_writer: WriteApi, influxdb_bucket: str, influxdb_org: str, \
-                        timestamp: datetime, send_interval_seconds: float, \
-                        ip_to_bytes_sent: dict, ip_to_bytes_recv: dict, \
-                        ip_to_eth: dict, ip_to_host: dict) -> None:
-    writes= []
-    write_timestamp=timestamp.timestamp()
-    for ip, count in ip_to_bytes_sent.items():
-        writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_sent_per_sec={count/send_interval_seconds} {write_timestamp}")
-    for ip, count in ip_to_bytes_recv.items():
-        writes.append(f"net,eth={ip_to_eth[ip]},host={ip},name={ip_to_host[ip]} bytes_recv_per_sec={count/send_interval_seconds}  {write_timestamp}")
-    influxdb_writer.write(influxdb_bucket, influxdb_org, writes,write_precision=WritePrecision.S)
 
 def main() -> None:
 
