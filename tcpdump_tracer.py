@@ -70,10 +70,10 @@ def main() -> None:
 
     ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} and host not {router_address} -U -w - "
     ssh_args = ["ssh", ssh_options, router_address, ssh_command]
-    ssh_args = [a for a in ssh_args if a != ""]
+    
 
     try:
-        wireshark_source = subprocess.Popen(ssh_args, stdout=subprocess.PIPE)
+        wireshark_source = subprocess.Popen([a for a in ssh_args if a != ""], stdout=subprocess.PIPE)
         packet: Packet
         for packet in PipeCapture(wireshark_source.stdout):
             packet_length = int(packet.length)
