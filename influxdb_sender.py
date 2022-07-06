@@ -15,24 +15,26 @@ from influxdb_client.client.write.point import WritePrecision
 
 
 
+
 def usage() -> None:
     print("https://github.com/robfox92/influxdb-networkmonitor")
     print("")
-    print("  -h, --help             print this text and exit")
-    print("  --debug_level          how loud do you want this to be? (default: 0, max: 5)")
-    print("influxdb options:")
-    print("  --influxdb_url         address of influxdb instance (default: http://localhost:8086)")
-    print("  --influxdb_token       token for accessing influxdb")
-    print("  --influxdb_org         influxdb organisation to write to")
-    print("  --influxdb_bucket      influxdb bucket to write to")
-    print("  --send_interval        seconds to wait between sending to influxdb (default: 5)")
-    print("router otions:")
-    print("  --router_address       address of router to collect traffic data from (default:10.0.0.1)")
-    print("  --router_port          port the router accepts ssh connections on (default:22)")
+    print("  -h, --help                 print this text and exit")
+    print("  --debug_level              how loud do you want this to be? (default: 0, loudest: -1)")
+    print("  --maintenance_interval     minutes between cleaning up local caches. integers only. (default: 5)")
+    print("influxdb options:")  
+    print("  --influxdb_url             address of influxdb instance (default: http://localhost:8086)")
+    print("  --influxdb_token           token for accessing influxdb")
+    print("  --influxdb_org             influxdb organisation to write to")
+    print("  --influxdb_bucket          influxdb bucket to write to")
+    print("  --send_interval            seconds to wait between sending to influxdb. integers only. (default: 5)")
+    print("router otions:") 
+    print("  --router_address           address of router to collect traffic data from (default:10.0.0.1)")
+    print("  --router_port              port the router accepts ssh connections on (default:22)")
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], ["h"], \
-                               ["help", "debug_level=",\
+                               ["help", "debug_level=", "maintenance_interval=",\
                                 "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=", \
                                 "router_address=", "router_port=", "traffic_subnet="])
 except getopt.GetoptError as e:
@@ -53,7 +55,7 @@ def write_log_message(timestamp:datetime, message_debug_level:int, method_name:s
         ostr=f"{timestamp} DEBUG_LEVEL={message_debug_level} {method_name}"
         for m in messages:
             ostr += f"\n{' '*(timestamp_padding//4)}{m}"
-    print(ostr)
+        print(ostr)
 
 
 def send_stats(   influxdb_writer: WriteApi, influxdb_bucket: str, influxdb_org: str, \
@@ -80,7 +82,7 @@ def main() -> None:
     influxdb_bucket = ""
     global DEBUG_LEVEL
     send_interval = timedelta(seconds=5)
-    maintenance_interval = timedelta(minutes=10)
+    maintenance_interval = timedelta(minutes=5)
 
     router_address = "10.0.0.1"
     router_port = 22
@@ -132,6 +134,13 @@ def main() -> None:
                 usage()
                 exit(1)
             continue
+        if o in ["--maintenance_interval"]:
+            try:
+                maintenance_interval = timedelta(minutes=int(a))
+            except:
+                print("error: failed to parse maintenance interval")
+                usage()
+                exit(1)
 
     if DEBUG_LEVEL < 0: DEBUG_LEVEL = 99999999
 
@@ -220,6 +229,11 @@ def main() -> None:
 
             
             if packet_time - last_maintenance_time > maintenance_interval:
+                current_time = datetime.now()
+                processing_lag = current_time - packet_time
+                write_log_message(packet_time, 3, "main()", 
+                    ["performing maintenance", f"real time = {current_time}",f"processing lag: {processing_lag}"]
+                )
                 # completely clear out our stats so we don't keep sending 0 for inactive hosts
                 ip_to_bytes_sent = dict()
                 ip_to_bytes_recv = dict()
