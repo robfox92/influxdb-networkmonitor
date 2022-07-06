@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 import getopt
+import random
 import socket
 import subprocess
 import sys
@@ -31,12 +32,13 @@ def usage() -> None:
     print("router otions:") 
     print("  --router_address           address of router to collect traffic data from (default:10.0.0.1)")
     print("  --router_port              port the router accepts ssh connections on (default:22)")
+    print("  --ssh_options              options for the ssh session")
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], ["h"], \
                                ["help", "debug_level=", "maintenance_interval=",\
                                 "influxdb_url=", "influxdb_token=", "influxdb_org=", "influxdb_bucket=", "send_interval=", \
-                                "router_address=", "router_port=", "traffic_subnet="])
+                                "router_address=", "router_port=", "traffic_subnet=", "ssh_options="])
 except getopt.GetoptError as e:
     print(e)
     usage()
@@ -83,6 +85,7 @@ def main() -> None:
     global DEBUG_LEVEL
     send_interval = timedelta(seconds=5)
     maintenance_interval = timedelta(minutes=5)
+    ssh_options = ""
 
     router_address = "10.0.0.1"
     router_port = 22
@@ -141,7 +144,10 @@ def main() -> None:
                 print("error: failed to parse maintenance interval")
                 usage()
                 exit(1)
-
+        if o in ["--ssh_options"]:
+            ssh_options = a
+    
+    
     if DEBUG_LEVEL < 0: DEBUG_LEVEL = 99999999
 
     # TODO: validate influxdb_token, influxdb_org, influxdb_bucket
@@ -159,10 +165,19 @@ def main() -> None:
     influxdb_writer = influx_client.write_api(write_options=ASYNCHRONOUS)
     
     
-    trace_source_args = ["python", "./tcpdump_tracer.py", \
-                                "--router_address", str(router_address), \
-                                "--router_port", str(router_port), \
-                                "--traffic_subnet", str(traffic_subnet) ]
+    trace_source_args = ["python", "./tcpdump_tracer.py"]
+    if router_address != "":
+        trace_source_args.append("--router_address")
+        trace_source_args.append(str(router_address))
+    if router_port != "":
+        trace_source_args.append("--router_port")
+        trace_source_args.append(str(router_port))
+    if traffic_subnet != "":
+        trace_source_args.append("--traffic_subnet")
+        trace_source_args.append(str(traffic_subnet))
+    if ssh_options != "":
+        trace_source_args.append("--ssh_options")
+        trace_source_args.append(str(ssh_options))
     trace_source = subprocess.Popen(trace_source_args, stdout=subprocess.PIPE)
     
     try:
@@ -194,7 +209,7 @@ def main() -> None:
             
             if ip not in ip_to_host.keys():
                 try:
-                    ip_to_host[ip] = socket.gethostbyaddr(ip)[0]
+                    ip_to_host[ip] = socket.gethostbyaddr(ip)[0].replace(".local","")
                 except:
                     ip_to_host[ip] = "unknown"
 

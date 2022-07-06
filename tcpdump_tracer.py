@@ -21,7 +21,7 @@ def usage() -> None:
     print("  --router_address       address of router to collect traffic data from (default:10.0.0.1)")
     print("  --router_port          port the router accepts ssh connections on (default:22)")
     print("  --traffic_subnet       subnet to collect traffic data from (default: 10.0.0.0/8)")
-
+    print("  --ssh_options          options for the ssh session")
 
 def get_local_ip(router_address:str, router_port:int) -> str:
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -30,7 +30,7 @@ def get_local_ip(router_address:str, router_port:int) -> str:
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], ["h"], \
-                               ["help", "router_address=", "router_port=", "traffic_subnet="])
+                               ["help", "router_address=", "router_port=", "traffic_subnet=", "ssh_options="])
 except getopt.GetoptError as e:
     print(e)
     usage()
@@ -41,6 +41,7 @@ def main() -> None:
     router_address = "10.0.0.1"
     router_port = 22
     traffic_subnet = "10.0.0.0/8"
+    ssh_options = ""
     
     for o,a in opts:
         if o in ["--help", "-h"]:
@@ -60,14 +61,18 @@ def main() -> None:
         if o in ["--traffic_subnet"]:
             traffic_subnet = a
             continue
+        if o in ["--ssh_options"]:
+            ssh_options = a
+    
     
     local_ip = get_local_ip(router_address=router_address, router_port=router_port)
     ip_range = ip_network(traffic_subnet)
 
     ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} and host not {router_address} -U -w - "
+    ssh_args = ["ssh", ssh_options, router_address, ssh_command]
+
     try:
-        wireshark_source = subprocess.Popen(["ssh", router_address, ssh_command], \
-                                            stdout=subprocess.PIPE)
+        wireshark_source = subprocess.Popen(ssh_args, stdout=subprocess.PIPE)
         packet: Packet
         for packet in PipeCapture(wireshark_source.stdout):
             packet_length = int(packet.length)
