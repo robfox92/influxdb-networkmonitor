@@ -5,17 +5,12 @@ from pyshark.capture.pipe_capture import PipeCapture
 
 import sys
 import time
-import asyncio
-from asyncio import Task
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import getopt
-from influxdb_client import InfluxDBClient, WriteApi
-from influxdb_client.client.write_api import ASYNCHRONOUS, SYNCHRONOUS
-from influxdb_client.client.write.point import WritePrecision
 import socket
 import subprocess
 from ipaddress import ip_address, ip_network
-import random
+
 
 def usage() -> None:
     print("influxdb-networkmonitor: monitor traffic on your network and store in influxdb")
@@ -69,22 +64,23 @@ def main() -> None:
     local_ip = get_local_ip(router_address=router_address, router_port=router_port)
     ip_range = ip_network(traffic_subnet)
 
-    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} and host not {router_address} and host not {local_ip} -U -w - "
+    ssh_command = f"/usr/sbin/tcpdump ip and not port {router_port} and net {traffic_subnet} and host not {router_address} -U -w - "
     try:
         wireshark_source = subprocess.Popen(["ssh", router_address, ssh_command], \
                                             stdout=subprocess.PIPE)
         packet: Packet
         for packet in PipeCapture(wireshark_source.stdout):
             packet_length = int(packet.length)
+            packet_time = packet.sniff_time.isoformat()
             src_ip = ip_address(packet['ip'].src)
             dst_ip = ip_address(packet['ip'].dst)
             # ignore broadcasts
             if src_ip.packed[3] == 255: continue
             if dst_ip.packed[3] == 255: continue
             if src_ip in ip_range:
-                print(f"SRC {packet['ip'].src} {packet_length}")
+                print(f"{packet_time} SRC {packet['ip'].src} {packet_length}")
             if dst_ip in ip_range:
-                print(f"DST {packet['ip'].dst} {packet_length}")
+                print(f"{packet_time} DST {packet['ip'].dst} {packet_length}")
 
     except Exception as e:
         print(e)
