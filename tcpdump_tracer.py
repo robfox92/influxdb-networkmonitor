@@ -78,9 +78,9 @@ def main() -> None:
             if src_ip.packed[3] == 255: continue
             if dst_ip.packed[3] == 255: continue
             if src_ip in ip_range:
-                print(f"{packet_time} SRC {packet['ip'].src} {packet_length}")
+                print(f"{packet_time} SRC {packet['ip'].src} {packet['eth'].src} {packet_length}")
             if dst_ip in ip_range:
-                print(f"{packet_time} DST {packet['ip'].dst} {packet_length}")
+                print(f"{packet_time} DST {packet['ip'].dst} {packet['eth'].dst} {packet_length}")
 
     except Exception as e:
         print(e)
